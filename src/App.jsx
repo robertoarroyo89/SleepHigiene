@@ -24,6 +24,19 @@ function Protected({ children }) {
   return children;
 }
 
+function OnboardingRoute() {
+  const { user, loading } = useAuth();
+  const { profile, loading: pLoading } = useUserProfile(user?.uid);
+
+  if (loading || pLoading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
+  // Si el perfil ya está marcado como completo, redirige al dashboard.
+  // En cuanto Firestore confirme el cambio, esto se dispara solo.
+  if (profile?.onboardingComplete) return <Navigate to="/" replace />;
+
+  return <Onboarding />;
+}
+
 function LoadingScreen() {
   return (
     <div className="min-h-screen grid place-items-center
@@ -49,10 +62,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/onboarding"
-            element={<Onboarding onDone={() => window.location.assign('/')} />}
-          />
+          <Route path="/onboarding" element={<OnboardingRoute />} />
           <Route path="/"              element={<Protected><Dashboard /></Protected>} />
           <Route path="/habitos"       element={<Protected><HabitTracker /></Protected>} />
           <Route path="/suplementos"   element={<Protected><Supplements /></Protected>} />
