@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Moon, Sun, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import FoxMascot from './ui/FoxMascot';
 import GlassCard from './ui/GlassCard';
 import { useAuth } from '../hooks/useAuth';
@@ -13,7 +14,8 @@ const stepVariants = {
 };
 const transition = { duration: 0.6, ease: [0.22, 1, 0.36, 1] };
 
-export default function Onboarding({ onDone }) {
+export default function Onboarding() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [goals, setGoals] = useState({
@@ -22,15 +24,20 @@ export default function Onboarding({ onDone }) {
     targetSleepHours: 8,
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const next = () => setStep((s) => Math.min(s + 1, 2));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const handleFinish = async () => {
     setSaving(true);
+    setError('');
     try {
       await completeOnboarding(user.uid, goals);
-      onDone?.();
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error('Onboarding error:', err.code, err.message, err);
+      setError(`No se pudo guardar: ${err.code || err.message}`);
     } finally {
       setSaving(false);
     }
@@ -121,6 +128,12 @@ export default function Onboarding({ onDone }) {
                 <FeatureRow icon={<Moon className="w-4 h-4" />} text="Educación sobre el descanso reparador" />
                 <FeatureRow icon={<Sparkles className="w-4 h-4" />} text="Suplementación estratégica basada en evidencia" />
               </ul>
+
+              {error && (
+                <p className="mt-4 text-sm text-rose-300 text-center break-words">
+                  {error}
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
